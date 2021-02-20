@@ -30,6 +30,7 @@ class LilysGardenEnv(gym.Env):
         self.latest_observation = None
         self.current_progress = None
         self.max_total_steps = None
+        self.levels = []
         self.valid_steps = 0
         self.total_steps = 0
         self.collect_goal_goal = 0
@@ -38,7 +39,7 @@ class LilysGardenEnv(gym.Env):
         self.channels = 24  # 24 from sim + action mask from env
 
         self.observation_space = gym.spaces.Box(low=0,
-                                                high=10.,
+                                                high=20.,
                                                 shape=(self.board_size[0], self.board_size[1], self.channels),
                                                 dtype=np.float32)
         self.action_space = spaces.Discrete(self.board_size[0] * self.board_size[1])
