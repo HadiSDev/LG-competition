@@ -3,3 +3,4 @@ PyYAML==5.4.1
 requests==2.25.1
 numpy~=1.18.5
 tensorflow~=1.15.0
+torch~=1.7.1

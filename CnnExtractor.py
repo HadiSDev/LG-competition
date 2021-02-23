@@ -10,8 +10,8 @@ class CnnExtractor(FeedForwardPolicy):
         super(CnnExtractor, self).__init__(*args, **kwargs,
                                            cnn_extractor=custom_cnn,
                                            act_fun=tf.nn.relu,
-                                           net_arch=[32, dict(pi=[64, 64], vi=[64, 64])],
-                                           feature_extraction='cnn', )
+                                           net_arch=[32, dict(pi=[64, 64], vf=[64, 64])],
+                                           feature_extraction='cnn')
 
 
 def custom_cnn(scaled_images, **kwargs):
