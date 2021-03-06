@@ -31,7 +31,7 @@ start_lvl = random.choice(train_levels)
 sim = Simulator(host="http://localhost:8090")
 env = gym.make('lg-competition-v0', level=start_lvl, simulator=sim)
 env.reset(seed=42)
-check_env(env)
+#check_env(env)
 
 policy_kwargs = dict(
     features_extractor_class=CustomCNN,
@@ -51,49 +51,85 @@ model = CustomA2C(CnnPolicy, env,
                   n_steps=256,
                   levels=train_levels
                   )
-model.learn(total_timesteps=35000000, )
+model.learn(total_timesteps=100, )
 
 model.set_levels(None)
+environment = model.env.envs[0]
 
-for level in levels:
-    if isinstance(model.env, LilysGardenEnv):
-        model.env.set_level(level)
-        model.env.reset(time.time())
-        model.learn(100000, tb_log_name=f'A2C-{level}')
+for level in levels[:1]:
+
+    if isinstance(environment, LilysGardenEnv):
+        environment.set_level(level)
+        environment.reset(time.time())
+        model.learn(10, tb_log_name=f'A2C-{level}')
 
 # Evaluate
 
-EVAL_EPISODES = 100
+EVAL_EPISODES = 5
 
-Episodes = []
 Rewards = []
 Levels = []
+valid_steps = []
+total_steps = []
+new_progress = []
+successful_clicks = []
+goal_reached = []
 
-for level in levels:
-    model.env.set_level(level)
-    obs = env.reset(time.time())
+for level in levels[:5]:
+    environment.set_level(level)
+    obs = environment.reset(time.time())
     cur_episode = 1
+    episode_rew = 0
+    cur_valid_steps = 0
+    cur_total_steps = 0
+    cur_new_progress = 0
+    cur_successful_click = 0
+    cur_goal_reached = 0
     while cur_episode <= EVAL_EPISODES:
 
         Sum = 0
         while True:
             action, _states = model.predict(obs)
-            obs, rewards, dones, info = env.step(action)
-            Sum += sum(rewards)
+            obs, rewards, dones, info = environment.step(action)
+            Sum += rewards
+
             if np.alltrue(dones):
-                Episodes.append(cur_episode)
-                Rewards.append(rewards)
-                Levels.append(level)
+                episode_rew += Sum
+
+                if info['goal_reached']:
+                    cur_goal_reached += 1
+
+                if info['successful_click']:
+                    cur_valid_steps += 1
+
+                cur_new_progress += info['new_progress']
+                cur_valid_steps += info['valid_steps']
+                cur_total_steps += info['total_steps']
+
                 cur_episode += 1
                 break
 
+    Rewards.append(episode_rew/EVAL_EPISODES)
+    valid_steps.append(cur_valid_steps/EVAL_EPISODES)
+    total_steps.append(cur_total_steps / EVAL_EPISODES)
+    new_progress.append(cur_new_progress / EVAL_EPISODES)
+    successful_clicks.append(cur_successful_click / EVAL_EPISODES)
+    goal_reached.append(cur_goal_reached / EVAL_EPISODES)
+
+    Levels.append(level)
+
 CSV = {
-    "Episodes": Episodes,
     "Levels": Levels,
-    "Rewards": Rewards
+    "Rewards": Rewards,
+    "total_steps": total_steps,
+    "new_progress": new_progress,
+    "successful_clicks": successful_clicks,
+    "goal_reached": goal_reached,
+    "valid_steps": valid_steps
+
 
 }
 
 df = pd.DataFrame(CSV)
 
-df.to_csv(f"A2C_Eval_{datetime.datetime.now()}")
+df.to_csv(f"A2C_Eval")
