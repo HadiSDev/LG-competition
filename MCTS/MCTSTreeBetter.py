@@ -3,7 +3,7 @@ import time
 from typing import List
 
 from torch.utils.tensorboard import SummaryWriter
-
+import torch as tc
 from MCTS.MCTSNode import MCTSNode
 from MCTS.MCTSPolicy import MCTSPolicy
 from MCTS.ReplayMemory import ReplayMemory
@@ -141,7 +141,7 @@ if __name__ == "__main__":
                         "return": []}, batch_size=BATCH_SIZE)
 
     levels = [i for i in range(1, 110)]
-
+    levels = levels[:10]
     random.shuffle(levels)
     test_env = LilysGardenEnv()
 
@@ -149,7 +149,7 @@ if __name__ == "__main__":
     def test_agent():
         total_rew = 0
 
-        level = random.choice(levels[:10])
+        level = random.choice(levels)
         test_env.set_level(level)
         obs = test_env.reset(time.time())
         step_idx = 0
@@ -182,7 +182,7 @@ if __name__ == "__main__":
         return total_rew, step_idx, level, valid_moves, total_moves, completion_time
 
 
-    level = random.choice(levels[:10])
+    level = random.choice(levels)
     env.set_level(level)
     iteration = 0
     mcts_acc_searches = 0
@@ -245,6 +245,9 @@ if __name__ == "__main__":
             writer.add_scalar(f"eval_completion_rate_avg / iteration", avg_completion_rate, iteration)
 
         writer.flush()
+
+        if iteration % 5 is 0:
+            tc.save(model.state_dict(), "/models/mcts_net")
 
         iteration += 1
 
