@@ -6,6 +6,7 @@ from torch.utils.tensorboard import SummaryWriter
 import torch as tc
 from MCTS.MCTSNode import MCTSNode
 from MCTS.MCTSPolicy import MCTSPolicy
+from MCTS.ReplayBuffer import ReplayBuffer
 from MCTS.ReplayMemory import ReplayMemory
 from MCTS.Trainer import Trainer
 from game.lilys_garden_env import LilysGardenEnv
@@ -132,13 +133,7 @@ if __name__ == "__main__":
     #model.to("cuda")
     trainer = Trainer(model, writer)
 
-    mem = ReplayMemory(100000,
-                       {"ob": np.long,
-                        "pi": np.float32,
-                        "return": np.float32},
-                       {"ob": [],
-                        "pi": [env.action_space.n],
-                        "return": []}, batch_size=BATCH_SIZE)
+    mem = ReplayBuffer(100000)
 
     levels = [i for i in range(1, 110)]
     levels = levels[:10]
@@ -199,9 +194,9 @@ if __name__ == "__main__":
         obs, pis, vs = tree.run_episode()
         mcts_acc_searches += 64
 
-        mem.add_all({"ob": obs, "pi": pis, "return": vs})
+        mem.push(obs, pis, vs)
 
-        batch = mem.get_minibatch()
+        batch = mem.sample(batch_size=BATCH_SIZE)
 
         total_loss, p_loss, v_loss = trainer.train(batch["ob"], batch["pi"], batch["return"])
 
