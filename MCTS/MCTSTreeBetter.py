@@ -123,7 +123,7 @@ class MCTSTreeBetter:
 
 if __name__ == "__main__":
 
-    writer = SummaryWriter()
+    writer = SummaryWriter(log_dir="mcts_logs")
 
     BATCH_SIZE = 32
     env = LilysGardenEnv()
