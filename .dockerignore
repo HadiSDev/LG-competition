@@ -1,0 +1,7 @@
+venv/
+venv/**/*
+venv2/
+venv2/**/*
+.git/
+test/
+test/**/*

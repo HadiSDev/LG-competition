@@ -1,9 +1,10 @@
 import gym
+
+from game.lilys_garden_env import LilysGardenEnv
 from game.simulator import Simulator
 
 # Loading in simulator and environment
-sim = Simulator(host="http://localhost:8090")
-env = gym.make('lg-competition-v0', level=1, simulator=sim)
+env = LilysGardenEnv()
 
 # To start a new playthrough, reset environment first to get initial obs. space
 obs = env.reset(seed=42)
@@ -13,7 +14,8 @@ print(f"Shape of observations: {obs.shape}")
 action = env.action_space.sample()  # OpenAI Gym build-in random sampling
 print(f"Chosen action: {action}")
 
-obs, reward, done, info_dict = env.step(action)
+obs, reward, done, info_dict = env.step(118)
+mask = env.create_action_mask(obs)
 print(f"Reward: {reward}, finished level: {done}, additional info: {info_dict}")
 
 # Continuing until level is complete:

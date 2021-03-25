@@ -1,7 +1,10 @@
 import json
+from typing import List
+
 import numpy as np
 import gym
 from gym import spaces
+from scipy.spatial.distance import squareform, pdist
 
 from game.simulator import Simulator
 
@@ -34,7 +37,7 @@ class LilysGardenEnv(gym.Env):
         self.valid_steps = 0
         self.total_steps = 0
         self.collect_goal_goal = 0
-        self.sim_seed = None
+        self.sim_seed = 42
         self.board_size = (13, 9)
         self.channels = 24  # 24 from sim + action mask from env
 
@@ -46,6 +49,18 @@ class LilysGardenEnv(gym.Env):
         self.valid_actions = [1] * self.action_space.n
 
         self.__dict__.update(kwargs)
+        self.set_simulator(Simulator(host="http://localhost:8090"))
+
+        self.current_actions = []
+
+    def restore_state(self, actions: List[int], seed: int):
+        self.reset(seed)
+        self.current_actions = []
+
+        last_state = None
+        for a in actions:
+            last_state = self.step(a)
+        return last_state
 
     def reset(self, seed=None):
 
@@ -89,7 +104,7 @@ class LilysGardenEnv(gym.Env):
         # Should the env be reset?
         done = goal_reached
         self.current_progress = new_progress
-
+        self.current_actions.append(action)
         return observation, reward, done, info_dict
 
     def render(self, mode='human'):
@@ -143,3 +158,22 @@ class LilysGardenEnv(gym.Env):
 
     def _index_to_coord(self, idx: int, idy: int) -> dict:
         return {'x': idx - self.board_size[0] // 2, 'y': idy - self.board_size[1] // 2}
+
+    def create_action_mask(self, observation, flattened=True):  # This is very hard coded at the moment
+        try:
+            matchable_tiles = np.zeros(self.board_size)
+            for color_idx in range(1, 7):
+                color_locs = np.array(list(zip(*np.where(observation[:, :, color_idx] > 0))))
+                if not color_locs.size == 0:
+                    has_neighbor = (squareform(pdist(color_locs, metric='cityblock')) == 1).sum(axis=0) > 0
+                    idxs = [(x[0], x[1]) for x in color_locs[has_neighbor]]
+                    for idx in idxs:
+                        matchable_tiles[idx[0]][idx[1]] = 1
+            action_mask_3d = (matchable_tiles * (observation[:, :, 10] > 0) +  # Color * cookie layer
+                              (observation[:, :, 11:15].sum(axis=2) > 0) > 0) * 1  # Booster layers
+            if flattened:
+                return action_mask_3d.flatten('F')
+            else:
+                return action_mask_3d
+        except (KeyError, ValueError, TypeError):
+            return None
