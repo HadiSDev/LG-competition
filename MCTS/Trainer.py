@@ -64,5 +64,5 @@ def preproccess_obs(obs):
 
     obs = th.from_numpy(obs)
     obs = th.as_tensor(obs).float()
-    obs.
+
     return obs

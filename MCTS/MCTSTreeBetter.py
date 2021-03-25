@@ -144,7 +144,7 @@ if __name__ == "__main__":
     env = LilysGardenEnv()
 
     model = MCTSPolicy(env.observation_space, env.action_space.n, env.channels)
-
+    model.to("cuda")
     trainer = Trainer(model, writer)
 
     mem = ReplayMemory(100000,
