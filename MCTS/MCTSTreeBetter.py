@@ -129,7 +129,7 @@ if __name__ == "__main__":
     env = LilysGardenEnv()
 
     model = MCTSPolicy(env.observation_space, env.action_space.n, env.channels)
-    model.to("cuda")
+    #model.to("cuda")
     trainer = Trainer(model, writer)
 
     mem = ReplayMemory(100000,
@@ -154,17 +154,23 @@ if __name__ == "__main__":
         obs = test_env.reset(time.time())
         step_idx = 0
         start = time.time()
+        actions_sorted = []
         while True:
             p, _ = model.step(obs)
-            actions_sorted: List[int] = np.argsort(-p).tolist()
+
+            if len(actions_sorted) is 0:
+                actions_sorted: List[int] = np.argsort(-p).tolist()[0]
+
             action = actions_sorted[0]
             obs, reward, done, info = test_env.step(action)
 
             step_idx += 1
             total_rew += reward
 
-            if info.successful_click is False:
+            if info['successful_click'] is False:
                 actions_sorted.pop()
+            else:
+                actions_sorted = []
 
             if done:
                 valid_moves = info.valid_steps
@@ -175,7 +181,7 @@ if __name__ == "__main__":
 
         return total_rew, step_idx, level, valid_moves, total_moves, completion_time
 
-
+    test_agent()
 
 
     level = random.choice(levels[:10])
