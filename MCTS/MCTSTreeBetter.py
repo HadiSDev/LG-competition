@@ -156,11 +156,15 @@ if __name__ == "__main__":
         start = time.time()
         while True:
             p, _ = model.step(obs)
-            action = np.argmax(p)
+            actions_sorted: List[int] = np.argsort(-p).tolist()
+            action = actions_sorted[0]
             obs, reward, done, info = test_env.step(action)
 
             step_idx += 1
             total_rew += reward
+
+            if info.successful_click is False:
+                actions_sorted.pop()
 
             if done:
                 valid_moves = info.valid_steps
@@ -229,12 +233,12 @@ if __name__ == "__main__":
             avg_total_moves = sum(avg_total_moves)/len(avg_total_moves)
             avg_valid_moves = sum(avg_valid_moves) / len(avg_valid_moves)
             avg_reward = sum(avg_reward) / len(avg_reward)
-            avg_reward = sum(avg_completion_rate) / len(avg_completion_rate)
+            avg_completion_rate = sum(avg_completion_rate) / len(avg_completion_rate)
 
             writer.add_scalar(f"eval_total_reward_avg / iteration", avg_reward, iteration)
             writer.add_scalar(f"eval_valid_moves_avg / iteration", avg_valid_moves, iteration)
             writer.add_scalar(f"eval_total_moves_avg / iteration", avg_total_moves, iteration)
-            writer.add_scalar(f"eval_completion_rate_avg / iteration", avg_total_moves, iteration)
+            writer.add_scalar(f"eval_completion_rate_avg / iteration", avg_completion_rate, iteration)
 
         writer.flush()
 
