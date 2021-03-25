@@ -181,8 +181,6 @@ if __name__ == "__main__":
 
         return total_rew, step_idx, level, valid_moves, total_moves, completion_time
 
-    test_agent()
-
 
     level = random.choice(levels[:10])
     env.set_level(level)
