@@ -58,7 +58,7 @@ class MCTSNode:
             actions = np.where(mask == 1)[0]
             actions = actions.tolist()
         else:
-            actions = [i for i in range(1, self.env.action_space.n)]
+            actions = [i for i in range(self.env.action_space.n+1)]
 
         for action in actions:
             all_actions = [] + self.actions
@@ -75,7 +75,7 @@ class MCTSNode:
             actions = np.where(mask == 1)[0]
             actions = actions.tolist()
         else:
-            actions = [i for i in range(1, self.env.action_space.n)]
+            actions = [i for i in range(self.env.action_space.n+1)]
 
         return random.choice(actions)
 

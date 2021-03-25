@@ -124,21 +124,6 @@ class MCTSTreeBetter:
 if __name__ == "__main__":
 
     writer = SummaryWriter()
-    # def log(iteration, step_idx, total_rew):
-    #     """
-    #     Logs one step in a testing episode.
-    #     :param test_env: Test environment that should be rendered.
-    #     :param iteration: Number of training iterations so far.
-    #     :param step_idx: Index of the step in the episode.
-    #     :param total_rew: Total reward collected so far.
-    #     """
-    #     time.sleep(0.3)
-    #     print()
-    #     print(f"Training Episodes: {iteration}")
-    #
-    #     print(f"Step: {step_idx}")
-    #     print(f"Return: {total_rew}")
-
 
     BATCH_SIZE = 32
     env = LilysGardenEnv()
@@ -168,6 +153,7 @@ if __name__ == "__main__":
         test_env.set_level(level)
         obs = test_env.reset(time.time())
         step_idx = 0
+        start = time.time()
         while True:
             p, _ = model.step(obs)
             action = np.argmax(p)
@@ -179,9 +165,11 @@ if __name__ == "__main__":
             if done:
                 valid_moves = info.valid_steps
                 total_moves = info.total_steps
+                end = time.time()
+                completion_time = end-start
                 break
 
-        return total_rew, step_idx, level, valid_moves, total_moves
+        return total_rew, step_idx, level, valid_moves, total_moves, completion_time
 
 
 
@@ -218,22 +206,35 @@ if __name__ == "__main__":
             avg_reward = []
             avg_valid_moves = []
             avg_total_moves = []
+            avg_completion_rate = []
             for _ in range(num_eval_episodes):
-                total_rew, step_idx, level, valid_moves, total_moves = test_agent()
+                total_rew, step_idx, level, valid_moves, total_moves, completion_time = test_agent()
                 avg_reward.append(total_rew)
                 avg_valid_moves.append(valid_moves)
                 avg_total_moves.append(total_moves)
+                avg_completion_rate.append(completion_time)
 
                 writer.add_scalar(f"eval_total_reward_level_{level} / iteration", total_rew, iteration)
                 writer.add_scalar(f"eval_total_reward_level_{level} / tree_acc_searches", total_rew, mcts_acc_searches)
 
+                writer.add_scalar(f"eval_valid_moves_level_{level} / iteration", valid_moves, iteration)
+                writer.add_scalar(f"eval_valid_moves_level_{level} / tree_acc_searches", valid_moves, mcts_acc_searches)
+
+                writer.add_scalar(f"eval_total_moves_level_{level} / iteration", total_moves, iteration)
+                writer.add_scalar(f"eval_total_moves_level_{level} / tree_acc_searches", total_moves, mcts_acc_searches)
+
+                writer.add_scalar(f"eval_completion_time_level_{level} / iteration", completion_time, iteration)
+                writer.add_scalar(f"eval_completion_time_level_{level} / tree_acc_searches", completion_time, mcts_acc_searches)
+
             avg_total_moves = sum(avg_total_moves)/len(avg_total_moves)
             avg_valid_moves = sum(avg_valid_moves) / len(avg_valid_moves)
             avg_reward = sum(avg_reward) / len(avg_reward)
+            avg_reward = sum(avg_completion_rate) / len(avg_completion_rate)
 
             writer.add_scalar(f"eval_total_reward_avg / iteration", avg_reward, iteration)
             writer.add_scalar(f"eval_valid_moves_avg / iteration", avg_valid_moves, iteration)
             writer.add_scalar(f"eval_total_moves_avg / iteration", avg_total_moves, iteration)
+            writer.add_scalar(f"eval_completion_rate_avg / iteration", avg_total_moves, iteration)
 
         writer.flush()
 
