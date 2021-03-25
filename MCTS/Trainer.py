@@ -12,7 +12,7 @@ class Trainer:
     derived via the tree search.
     """
 
-    def __init__(self, policy, writer: SummaryWriter, learning_rate=0.1):
+    def __init__(self, policy, writer: SummaryWriter, device, learning_rate=0.1):
         self.step_model = policy
 
         value_criterion = nn.MSELoss()
@@ -26,8 +26,9 @@ class Trainer:
             total_loss = []
             for epoch in range(epochs):
                 obs = preproccess_obs(obs)
-                search_pis = th.from_numpy(search_pis)
-                returns = th.from_numpy(returns)
+                obs.to(device=device)
+                search_pis = th.as_tensor(search_pis, device=device)
+                returns = th.as_tensor(returns, device=device)
 
                 optimizer.zero_grad()
                 logits, policy, value = self.step_model(obs)

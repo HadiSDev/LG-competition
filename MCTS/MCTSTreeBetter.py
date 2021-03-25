@@ -54,7 +54,7 @@ class MCTSTreeBetter:
         return max(node.children, key=self.eval_UTC)
 
     def simulate(self, node: MCTSNode, num_iter=1):
-
+        print("Simulating")
         avg_acc_total_reward = node.simulate()
 
         for n in range(num_iter):
@@ -81,6 +81,7 @@ class MCTSTreeBetter:
             node = self.utc_select(node)
 
     def expand(self, node: MCTSNode):
+        print("Expanding")
         assert node.is_terminal() is False
 
         if node.is_expanded() is True:
@@ -112,7 +113,7 @@ class MCTSTreeBetter:
     def run_episode(self, ):
 
         while True:
-
+            print(f"Tree searches {self.size_count}")
             if self.size_count >= self.max_size:
                 break
 
@@ -122,15 +123,15 @@ class MCTSTreeBetter:
 
 
 if __name__ == "__main__":
-
-    writer = SummaryWriter(log_dir="mcts_logs")
+    device = tc.device('cuda:0')
+    writer = SummaryWriter(log_dir="mcts_logs/mcts")
 
     BATCH_SIZE = 32
     env = LilysGardenEnv()
 
-    model = MCTSPolicy(env.observation_space, env.action_space.n, env.channels)
-    #model.to("cuda")
-    trainer = Trainer(model, writer)
+    model = MCTSPolicy(env.observation_space, env.action_space.n, device, env.channels)
+    model.to(device=device)
+    trainer = Trainer(model, writer, device)
 
     mem = ReplayMemory(100000,
                        {"ob": np.long,
@@ -139,7 +140,7 @@ if __name__ == "__main__":
                        {"ob": [],
                         "pi": [env.action_space.n],
                         "return": []}, batch_size=BATCH_SIZE)
-
+    mem.add_all({"ob": [np.random.rand(13, 9, 24)], "pi": [2], "return": [3]})
     levels = [i for i in range(1, 110)]
     levels = levels[:10]
     random.shuffle(levels)

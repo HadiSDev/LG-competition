@@ -10,9 +10,9 @@ from game.lilys_garden_env import LilysGardenEnv
 
 class MCTSPolicy(nn.Module):
 
-    def __init__(self, observation_space: Box, n_actions, n_input_channels=24):
+    def __init__(self, observation_space: Box, n_actions, device, n_input_channels=24):
         super(MCTSPolicy, self).__init__()
-
+        self.device = device
         self.n_obs = observation_space.shape[0]
         self.n_actions = n_actions
         self.n_input_channels = n_input_channels
@@ -60,6 +60,7 @@ class MCTSPolicy(nn.Module):
         return th.movedim(observations, -1, 1)
 
     def forward(self, obs):
+
         features = self.cnn(obs)
         fcnn = self.fcnn(features)
         logits = self.p_net(fcnn)
@@ -77,8 +78,9 @@ class MCTSPolicy(nn.Module):
         the given observations.
         """
         obs = preproccess_obs(obs)
+        obs.to(device="cuda:0")
         _, pi, v = self.forward(obs)
-        return pi.detach().numpy(), v.detach().numpy()
+        return pi.detach().cpu().numpy(), v.detach().cpu().numpy()
 
 
 def preproccess_obs(obs):
@@ -87,8 +89,7 @@ def preproccess_obs(obs):
 
     obs = (obs - mean) / std
 
-    obs = th.from_numpy(obs)
-    obs = th.as_tensor(obs).float()
+    obs = th.as_tensor(obs, device="cuda").float()
     obs = th.unsqueeze(obs, 0)
     obs = obs.permute(0, 3, 1, 2)
     return obs

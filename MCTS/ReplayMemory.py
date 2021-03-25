@@ -66,8 +66,11 @@ class ReplayMemory:
 
         if self.current + num <= self.size:
             for column_name in self.columns.keys():
-                self.columns[column_name][np.arange(num)+self.current] = \
-                    rows[column_name]
+                c = (np.arange(num)+self.current)
+                column = self.columns[column_name]
+                row = rows[column_name]
+                column[c] = \
+                    row
         else:
             num_free = self.size - self.current
             num_over = num - num_free
