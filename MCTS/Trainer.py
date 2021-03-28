@@ -1,3 +1,5 @@
+import logging
+
 import numpy as np
 import torch as th
 import torch.nn as nn
@@ -12,24 +14,24 @@ class Trainer:
     derived via the tree search.
     """
 
-    def __init__(self, policy, writer: SummaryWriter, device, learning_rate=0.1):
+    def __init__(self, policy, writer: SummaryWriter, learning_rate=0.1):
         self.step_model = policy
 
         value_criterion = nn.MSELoss()
+
         optimizer = th.optim.Adam(self.step_model.parameters(),
                                   lr=learning_rate)
         self.writer = writer
 
-        def train(obs, search_pis, returns, epochs=5):
+        def train(obs, search_pis, returns, epochs=1):
             p_loss = []
             v_loss = []
             total_loss = []
+            obs = preproccess_obs(obs)
+            obs.to(device="cuda:0")
+            search_pis = th.as_tensor(search_pis).to(device="cuda:0")
+            returns = th.as_tensor(returns).to(device="cuda:0")
             for epoch in range(epochs):
-                obs = preproccess_obs(obs)
-                obs.to(device=device)
-                search_pis = th.as_tensor(search_pis, device=device)
-                returns = th.as_tensor(returns, device=device)
-
                 optimizer.zero_grad()
                 logits, policy, value = self.step_model(obs)
 
@@ -42,13 +44,10 @@ class Trainer:
                 v_loss.append(value_loss)
                 total_loss.append(loss)
 
-                writer.add_scalar("policy_loss/train", policy_loss, epoch)
-                writer.add_scalar("value_loss/train", value_loss, epoch)
-                writer.add_scalar("Loss/train", loss, epoch)
-
                 loss.backward()
                 optimizer.step()
 
+                logging.debug(f"Epoch: {epoch}, loss: {loss}, policy_loss: {policy_loss}, value_loss: {value_loss}")
                 print(f"Epoch: {epoch}, loss: {loss}, policy_loss: {policy_loss}, value_loss: {value_loss}")
 
             length = len(total_loss)
@@ -63,7 +62,7 @@ def preproccess_obs(obs):
 
     obs = (obs - mean) / std
 
-    obs = th.from_numpy(obs)
-    obs = th.as_tensor(obs).float()
+    obs = th.as_tensor(obs, device="cuda").float()
+    obs = obs.permute(0, 3, 1, 2)
 
     return obs

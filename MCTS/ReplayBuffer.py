@@ -23,3 +23,14 @@ class ReplayBuffer(object):
 
     def __len__(self):
         return len(self.memory)
+
+
+if __name__ == '__main__':
+    mem = ReplayBuffer(10000)
+    for i in range(64):
+        mem.push(i, i, i)
+
+    batch = mem.sample(32)
+    zipped = zip(batch)
+    batch = Transition(*zip(*batch))
+    print()

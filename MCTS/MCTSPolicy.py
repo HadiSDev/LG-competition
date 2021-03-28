@@ -10,9 +10,8 @@ from game.lilys_garden_env import LilysGardenEnv
 
 class MCTSPolicy(nn.Module):
 
-    def __init__(self, observation_space: Box, n_actions, device, n_input_channels=24):
+    def __init__(self, observation_space: Box, n_actions, n_input_channels=24):
         super(MCTSPolicy, self).__init__()
-        self.device = device
         self.n_obs = observation_space.shape[0]
         self.n_actions = n_actions
         self.n_input_channels = n_input_channels
